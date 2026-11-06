@@ -68,7 +68,61 @@ public class Marker {
      * Example: a = "ACGTAC", b = "TTACGT", k = 4: the words of a are ACGT, CGTA, GTAC; only ACGT is in b, so the answer is 1.
      */
     public static int sharedWords(String a, String b, int k) {
-        // TODO Mission 4
-        return -1;
+        if (a.length() < k || b.length() < k) {
+            return 0;
+        }
+        long BASE = 131L;
+        long MOD = 1_000_000_007L;
+
+        long top = 1L;
+        for (int i = 1; i < k; i++) {
+            top = (top * BASE) % MOD;
+        }
+
+        Map<Long, List<Integer>> bMap = new HashMap<>();
+        long hb = 0;
+        for (int i = 0; i < k; i++) {
+            hb = (hb * BASE + b.charAt(i)) % MOD;
+        }
+        bMap.computeIfAbsent(hb, key -> new ArrayList<>()).add(0);
+
+        for (int j = 1; j + k <= b.length(); j++) {
+            hb = (hb - (b.charAt(j - 1) * top) % MOD + MOD) % MOD;
+            hb = (hb * BASE + b.charAt(j + k - 1)) % MOD;
+            bMap.computeIfAbsent(hb, key -> new ArrayList<>()).add(j);
+        }
+
+        int count = 0;
+        long ha = 0;
+        for (int i = 0; i < k; i++) {
+            ha = (ha * BASE + a.charAt(i)) % MOD;
+        }
+        if (bMap.containsKey(ha) && matchesAny(a, 0, b, bMap.get(ha), k)) {
+            count++;
+        }
+
+        for (int i = 1; i + k <= a.length(); i++) {
+            ha = (ha - (a.charAt(i - 1) * top) % MOD + MOD) % MOD;
+            ha = (ha * BASE + a.charAt(i + k - 1)) % MOD;
+            if (bMap.containsKey(ha) && matchesAny(a, i, b, bMap.get(ha), k)) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static boolean matchesAny(String a, int aStart, String b, List<Integer> bStarts, int k) {
+        for (int bStart : bStarts) {
+            boolean eq = true;
+            for (int t = 0; t < k; t++) {
+                if (a.charAt(aStart + t) != b.charAt(bStart + t)) {
+                    eq = false;
+                    break;
+                }
+            }
+            if (eq) return true;
+        }
+        return false;
     }
 }
